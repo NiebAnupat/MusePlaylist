@@ -2,22 +2,86 @@ import React from "react";
 import AppBar from "./Appbar";
 import { DataGrid } from "@mui/x-data-grid";
 import { Box, TextField, Button, Modal, Typography } from "@mui/material";
+import useAxios from "./useAxios";
 
 export default function Home() {
-  const [open, setOpen] = React.useState(false);
+  const [list, setList] = React.useState([]);
 
-  const handleOpen = () => setOpen(true);
+  React.useEffect(() => {
+    fetchList();
+  }, []);
+
+  const fetchList = async () => {
+    try {
+      const res = await useAxios.get("/music");
+      setList(res.data.reverse());
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
+  const [id, setId] = React.useState("");
+  const [theName, setTheName] = React.useState("");
+  const [theArtist, setTheArtist] = React.useState("");
+  const [theDescription, setTheDescription] = React.useState("");
+
+  const [open, setOpen] = React.useState(false);
+  const handleOpen = async (id) => {
+    try {
+      const res = await useAxios.get(`/music/${id}`);
+      setId(res.data.id);
+      setTheName(res.data.name);
+      setTheArtist(res.data.artist);
+      setTheDescription(res.data.description);
+    } catch (e) {
+      alert(e.message);
+    }
+    setOpen(true);
+  };
   const handleClose = () => setOpen(false);
 
-  const list = [];
+  const handleUpdateMusic = async (id) => {
+    try {
+      const res = await useAxios.put(`/music/${id}`, {
+        name: document.getElementById("name").value,
+        artist: document.getElementById("artist").value,
+        description: document.getElementById("description").value,
+      });
+      alert("แก้ไขเพลงเรียบร้อยแล้ว");
+      handleClose();
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
+  const handleDeleteMusic = async (id) => {
+    try {
+      const res = await useAxios.delete(`/music/${id}`);
+      alert("ลบเพลงเรียบร้อยแล้ว");
+      handleClose();
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
+  // search
+  const [search, setSearch] = React.useState("");
+
+  const handleSearch = async () => {
+    try {
+      const res = await useAxios.get(`/music/search/${search}`);
+      setList(res.data);
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
   const columns = [
     { field: "id", headerName: "ลำดับ", width: 80 },
-    { field: "date", headerName: "ชื่อเพลง", width: 385 },
-    { field: "time_in", headerName: "ศิลปิน", width: 350 },
-    { field: "time_out", headerName: "รายละเอียด", width: 350 },
+    { field: "name", headerName: "ชื่อเพลง", width: 370 },
+    { field: "artist", headerName: "ศิลปิน", width: 330 },
+    { field: "description", headerName: "รายละเอียด", width: 385 },
   ];
-
-  const row = [{ id: 1, date: "Frozen yoghurt", time_in: 159, time_out: 6.0 }];
 
   return (
     <>
@@ -48,13 +112,15 @@ export default function Home() {
           }}
         >
           <TextField
-            id="outlined-basic"
             label="ค้นหาเพลง"
             variant="outlined"
             sx={{
               width: "90%",
-              backdropFilter: "blur(2px)",
+              backdropFilter: "blur(10px)",
               boxShadow: "0 0 10px rgba(0, 0, 0, 0.2)",
+            }}
+            onChange={(e) => {
+              setSearch(e.target.value);
             }}
           />
           <Button
@@ -66,6 +132,7 @@ export default function Home() {
                 color: "black",
               },
             }}
+            onClick={handleSearch}
           >
             ค้นหา
           </Button>
@@ -78,32 +145,27 @@ export default function Home() {
             marginBottom: 5,
             width: "78%",
             borderRadius: "10px",
-            backdropFilter: "blur(2px)",
+            backdropFilter: "blur(8px)",
             boxShadow: "0 0 10px rgba(0, 0, 0, 0.2)",
           }}
-          rows={row}
+          rows={list}
           columns={columns}
           initialState={{
             pagination: {
               paginationModel: {
-                pageSize: 8,
+                pageSize: 10,
               },
             },
           }}
           onRowClick={(e) => {
-            handleOpen();
+            handleOpen(e.row.id);
           }}
           pageSizeOptions={[8]}
         />
       </Box>
 
       {/* ป็อบอัพ */}
-      <Modal
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
+      <Modal open={open} onClose={handleClose}>
         <Box
           sx={{
             marginTop: "20px",
@@ -134,9 +196,25 @@ export default function Home() {
               justifyContent: "space-around",
             }}
           >
-            <TextField id="name" label="ชื่อเพลง" variant="outlined" />
-            <TextField id="artist" label="ศิลปิน" variant="outlined" />
-            <TextField id="description" label="รายละเอียด" multiline rows={4} />
+            <TextField
+              id="name"
+              label="ชื่อเพลง"
+              variant="outlined"
+              defaultValue={theName}
+            />
+            <TextField
+              id="artist"
+              label="ศิลปิน"
+              variant="outlined"
+              defaultValue={theArtist}
+            />
+            <TextField
+              id="description"
+              label="รายละเอียด"
+              multiline
+              rows={4}
+              defaultValue={theDescription}
+            />
           </Box>
 
           <Box
@@ -145,8 +223,22 @@ export default function Home() {
               justifyContent: "end",
             }}
           >
-            <Button sx={{ color: "red" }}>ลบเพลง</Button>
-            <Button>แก้ไข</Button>
+            <Button
+              sx={{ color: "red" }}
+              // delete with id
+              onClick={() => {
+                handleDeleteMusic(id);
+              }}
+            >
+              ลบเพลง
+            </Button>
+            <Button
+              onClick={() => {
+                handleUpdateMusic(id);
+              }}
+            >
+              แก้ไข
+            </Button>
           </Box>
         </Box>
       </Modal>

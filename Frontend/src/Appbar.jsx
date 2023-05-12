@@ -9,13 +9,31 @@ import {
   Modal,
   TextField,
 } from "@mui/material";
-import { Link } from "react-router-dom";
+import useAxios from "./useAxios";
 
 export default function ResponsiveAppBar() {
   const [open, setOpen] = React.useState(false);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+
+  const [name, setName] = React.useState("");
+  const [artist, setArtist] = React.useState("");
+  const [description, setDescription] = React.useState("");
+
+  const handleAddMusic = async () => {
+    try {
+      const res = await useAxios.post("/music", {
+        name,
+        artist,
+        description,
+      });
+      alert("เพิ่มเพลงเรียบร้อยแล้ว");
+      handleClose();
+    } catch (e) {
+      alert(e.message);
+    }
+  };
 
   return (
     <>
@@ -28,12 +46,10 @@ export default function ResponsiveAppBar() {
       >
         <Container maxWidth="xl">
           <Toolbar>
-            <Link to="/">
               <img
                 width={50}
                 src="https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/ab52da00-71c2-4ae2-bc2a-3b28214b02c9/df5ivtx-eadd298a-d7bd-474b-8a5c-ac25ae236089.png/v1/fill/w_1280,h_1280/music_band_logo_design__song_logo_design_png__by_rahatislam11_df5ivtx-fullview.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTI4MCIsInBhdGgiOiJcL2ZcL2FiNTJkYTAwLTcxYzItNGFlMi1iYzJhLTNiMjgyMTRiMDJjOVwvZGY1aXZ0eC1lYWRkMjk4YS1kN2JkLTQ3NGItOGE1Yy1hYzI1YWUyMzYwODkucG5nIiwid2lkdGgiOiI8PTEyODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.stwNmQZaDjjAVXsG4piJptiaoHLXKAsIMa3SAWCoV_c"
               />
-            </Link>
 
             <Typography
               variant="h6"
@@ -96,13 +112,30 @@ export default function ResponsiveAppBar() {
               justifyContent: "space-around",
             }}
           >
-            <TextField id="name" label="ชื่อเพลง" variant="outlined" />
-            <TextField id="artist" label="ศิลปิน" variant="outlined" />
+            <TextField
+              id="name"
+              label="ชื่อเพลง"
+              variant="outlined"
+              onChange={(e) => {
+                setName(e.target.value);
+              }}
+            />
+            <TextField
+              id="artist"
+              label="ศิลปิน"
+              variant="outlined"
+              onChange={(e) => {
+                setArtist(e.target.value);
+              }}
+            />
             <TextField
               id="description"
               label="รายละเอียด"
               multiline
               rows={4}
+              onChange={(e) => {
+                setDescription(e.target.value);
+              }}
             />
             <Button
               variant="contained"
@@ -113,6 +146,7 @@ export default function ResponsiveAppBar() {
                   color: "black",
                 },
               }}
+              onClick={handleAddMusic}
             >
               ยืนยัน
             </Button>
